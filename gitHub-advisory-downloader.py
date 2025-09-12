@@ -298,4 +298,151 @@ class GitHubAdvisoryDownloader:
         """Create CSV file with vulnerability data."""
         print(f"\n📊 Creating CSV file with {len(self.vulnerability_rows)} vulnerability records...")
         
-        csv_file = output_dir /
+        csv_file = output_dir / f"github_advisories_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        
+        if not self.vulnerability_rows:
+            print("⚠️  No vulnerability data to write to CSV")
+            return
+        
+        # CSV column headers
+        fieldnames = [
+            "ghsa_id", "cve_ids", "summary", "severity", "cvss_score", "cvss_vector",
+            "package_name", "ecosystem", "vulnerable_version_range", "first_patched_version",
+            "published_at", "updated_at", "references", "permalink", "KEV"
+        ]
+        
+        try:
+            with open(csv_file, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(self.vulnerability_rows)
+            
+            print(f"✅ CSV file created: {csv_file}")
+            print(f"   Total records: {len(self.vulnerability_rows)}")
+            
+        except Exception as e:
+            print(f"❌ Error creating CSV file: {e}")
+
+    def save_json_files(self, output_dir: Path) -> None:
+        """Save advisories organized by severity as separate JSON files."""
+        print(f"\n📄 Saving JSON files by severity...")
+        
+        for severity, advisories in self.advisories_by_severity.items():
+            if advisories:  # Only create files for severities that have data
+                filename = f"advisories_{severity.lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                filepath = output_dir / filename
+                
+                try:
+                    with open(filepath, 'w', encoding='utf-8') as f:
+                        json.dump(advisories, f, indent=2, default=str)
+                    
+                    print(f"✅ {severity}: {len(advisories)} advisories saved to {filename}")
+                    
+                except Exception as e:
+                    print(f"❌ Error saving {severity} advisories: {e}")
+        
+        # Also save all advisories in a single file
+        all_advisories_file = output_dir / f"all_advisories_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        try:
+            with open(all_advisories_file, 'w', encoding='utf-8') as f:
+                json.dump(self.advisories_by_severity, f, indent=2, default=str)
+            
+            print(f"✅ All advisories saved to {all_advisories_file.name}")
+            
+        except Exception as e:
+            print(f"❌ Error saving all advisories file: {e}")
+
+    def download_and_save(self, output_dir: str = "github_advisories_output", 
+                         create_csv: bool = True, create_json: bool = True) -> None:
+        """Main method to download advisories and save them to files."""
+        # Create output directory
+        output_path = Path(output_dir)
+        output_path.mkdir(exist_ok=True)
+        print(f"📁 Output directory: {output_path.absolute()}")
+        
+        # Fetch CISA KEV catalog first
+        self.fetch_cisa_kev_catalog()
+        
+        # Download all advisories
+        self.fetch_advisories()
+        
+        # Save files
+        if create_csv:
+            self.create_csv_file(output_path)
+        
+        if create_json:
+            self.save_json_files(output_path)
+        
+        print(f"\n🎉 Download complete!")
+        print(f"📊 Final Statistics:")
+        print(f"   Total advisories downloaded: {self.stats['total_downloaded']}")
+        print(f"   Total vulnerability records: {self.stats['total_vulnerabilities']}")
+        print(f"   KEV matches: {self.stats['kev_matches']}")
+        print(f"   Errors encountered: {self.stats['errors']}")
+        print(f"   Files saved to: {output_path.absolute()}")
+
+
+def main():
+    """Main function to run the GitHub Advisory Downloader."""
+    parser = argparse.ArgumentParser(
+        description="Download GitHub Security Advisories and organize them by severity",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  %(prog)s                           # Download all advisories
+  %(prog)s --token YOUR_TOKEN       # Use GitHub token for higher rate limits
+  %(prog)s --output my_output       # Save to custom directory
+  %(prog)s --no-csv                 # Skip CSV generation
+  %(prog)s --no-json                # Skip JSON files
+        """
+    )
+    
+    parser.add_argument(
+        "--token", "-t",
+        help="GitHub personal access token (optional, for higher rate limits)"
+    )
+    
+    parser.add_argument(
+        "--output", "-o", 
+        default="github_advisories_output",
+        help="Output directory (default: github_advisories_output)"
+    )
+    
+    parser.add_argument(
+        "--no-csv", 
+        action="store_true",
+        help="Skip CSV file generation"
+    )
+    
+    parser.add_argument(
+        "--no-json", 
+        action="store_true",
+        help="Skip JSON file generation"
+    )
+    
+    args = parser.parse_args()
+    
+    print("🚀 GitHub Security Advisory Downloader")
+    print("="*50)
+    
+    # Initialize downloader
+    downloader = GitHubAdvisoryDownloader(github_token=args.token)
+    
+    try:
+        # Run the download and save process
+        downloader.download_and_save(
+            output_dir=args.output,
+            create_csv=not args.no_csv,
+            create_json=not args.no_json
+        )
+        
+    except KeyboardInterrupt:
+        print("\n⚠️  Download interrupted by user")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Fatal error: {e}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
+
