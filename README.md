@@ -180,7 +180,7 @@ The test suite covers:
 
 ## 📋 Requirements
 
-Create `requirements.txt`:
+`requirements.txt`:
 
 ```
 requests>=2.31.0
