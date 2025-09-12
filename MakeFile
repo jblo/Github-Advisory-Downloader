@@ -1,0 +1,182 @@
+# Makefile for GitHub Security Advisory Downloader
+
+# Variables
+PYTHON := python3
+PIP := pip3
+PROJECT_NAME := github-advisory-downloader
+TEST_DIR := tests
+VENV := venv
+
+# Colors for output
+RED := \033[31m
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+RESET := \033[0m
+
+.PHONY: help install install-dev test test-verbose test-coverage clean lint format security-check build upload run run-with-token setup-dev venv
+
+# Default target
+help: ## Show this help message
+	@echo "$(BLUE)GitHub Security Advisory Downloader$(RESET)"
+	@echo "====================================="
+	@echo ""
+	@echo "Available commands:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2}'
+
+# Installation
+install: ## Install package and dependencies
+	@echo "$(BLUE)Installing $(PROJECT_NAME)...$(RESET)"
+	$(PIP) install -r requirements.txt
+	@echo "$(GREEN)Installation complete!$(RESET)"
+
+install-dev: ## Install development dependencies
+	@echo "$(BLUE)Installing development dependencies...$(RESET)"
+	$(PIP) install -r requirements.txt
+	$(PIP) install flake8 black isort mypy bandit
+	@echo "$(GREEN)Development dependencies installed!$(RESET)"
+
+# Virtual Environment
+venv: ## Create virtual environment
+	@echo "$(BLUE)Creating virtual environment...$(RESET)"
+	$(PYTHON) -m venv $(VENV)
+	@echo "$(GREEN)Virtual environment created!$(RESET)"
+	@echo "$(YELLOW)Activate with: source $(VENV)/bin/activate$(RESET)"
+
+setup-dev: venv ## Setup development environment
+	@echo "$(BLUE)Setting up development environment...$(RESET)"
+	. $(VENV)/bin/activate && $(MAKE) install-dev
+	@echo "$(GREEN)Development environment ready!$(RESET)"
+
+# Testing
+test: ## Run tests
+	@echo "$(BLUE)Running tests...$(RESET)"
+	$(PYTHON) -m pytest $(TEST_DIR) -v
+	@echo "$(GREEN)Tests completed!$(RESET)"
+
+test-verbose: ## Run tests with verbose output
+	@echo "$(BLUE)Running tests (verbose)...$(RESET)"
+	$(PYTHON) -m pytest $(TEST_DIR) -v -s
+	@echo "$(GREEN)Tests completed!$(RESET)"
+
+test-coverage: ## Run tests with coverage report
+	@echo "$(BLUE)Running tests with coverage...$(RESET)"
+	$(PYTHON) -m pytest $(TEST_DIR) --cov=github_advisory_downloader --cov-report=html --cov-report=term
+	@echo "$(GREEN)Coverage report generated in htmlcov/$(RESET)"
+
+# Code Quality
+lint: ## Run code linting
+	@echo "$(BLUE)Running linting...$(RESET)"
+	flake8 github_advisory_downloader.py $(TEST_DIR)
+	mypy github_advisory_downloader.py
+	@echo "$(GREEN)Linting completed!$(RESET)"
+
+format: ## Format code with black and isort
+	@echo "$(BLUE)Formatting code...$(RESET)"
+	black github_advisory_downloader.py $(TEST_DIR)
+	isort github_advisory_downloader.py $(TEST_DIR)
+	@echo "$(GREEN)Code formatting completed!$(RESET)"
+
+security-check: ## Run security checks
+	@echo "$(BLUE)Running security checks...$(RESET)"
+	bandit -r github_advisory_downloader.py
+	@echo "$(GREEN)Security checks completed!$(RESET)"
+
+# Running the application
+run: ## Run the downloader with default settings
+	@echo "$(BLUE)Running GitHub Advisory Downloader...$(RESET)"
+	$(PYTHON) github_advisory_downloader.py
+	@echo "$(GREEN)Download completed! Check github_advisories/ directory$(RESET)"
+
+run-with-token: ## Run with GitHub token (set GITHUB_TOKEN env var)
+	@echo "$(BLUE)Running GitHub Advisory Downloader with token...$(RESET)"
+	@if [ -z "$$GITHUB_TOKEN" ]; then \
+		echo "$(RED)Error: GITHUB_TOKEN environment variable not set$(RESET)"; \
+		echo "$(YELLOW)Usage: GITHUB_TOKEN=your_token make run-with-token$(RESET)"; \
+		exit 1; \
+	fi
+	$(PYTHON) github_advisory_downloader.py --token $$GITHUB_TOKEN
+	@echo "$(GREEN)Download completed! Check github_advisories/ directory$(RESET)"
+
+run-custom: ## Run with custom output directory (OUTPUT_DIR env var)
+	@echo "$(BLUE)Running with custom output directory...$(RESET)"
+	@if [ -z "$$OUTPUT_DIR" ]; then \
+		OUTPUT_DIR="custom_advisories"; \
+	fi; \
+	$(PYTHON) github_advisory_downloader.py --output-dir $$OUTPUT_DIR
+	@echo "$(GREEN)Download completed! Check $$OUTPUT_DIR/ directory$(RESET)"
+
+# Package building
+build: clean ## Build distribution packages
+	@echo "$(BLUE)Building distribution packages...$(RESET)"
+	$(PYTHON) setup.py sdist bdist_wheel
+	@echo "$(GREEN)Distribution packages built in dist/$(RESET)"
+
+upload: build ## Upload package to PyPI (requires credentials)
+	@echo "$(BLUE)Uploading to PyPI...$(RESET)"
+	twine upload dist/*
+	@echo "$(GREEN)Package uploaded successfully!$(RESET)"
+
+# Cleanup
+clean: ## Clean build artifacts and cache files
+	@echo "$(BLUE)Cleaning build artifacts...$(RESET)"
+	rm -rf build/
+	rm -rf dist/
+	rm -rf *.egg-info/
+	rm -rf .pytest_cache/
+	rm -rf htmlcov/
+	rm -rf .coverage
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -delete
+	@echo "$(GREEN)Cleanup completed!$(RESET)"
+
+clean-all: clean ## Clean everything including virtual environment
+	@echo "$(BLUE)Cleaning everything...$(RESET)"
+	rm -rf $(VENV)/
+	rm -rf github_advisories/
+	@echo "$(GREEN)Deep cleanup completed!$(RESET)"
+
+# Documentation
+docs: ## Generate documentation (placeholder)
+	@echo "$(YELLOW)Documentation generation not implemented yet$(RESET)"
+	@echo "$(BLUE)Current documentation is in README.md$(RESET)"
+
+# Quick start for new users
+quickstart: ## Quick setup and first run
+	@echo "$(BLUE)GitHub Advisory Downloader - Quick Start$(RESET)"
+	@echo "=========================================="
+	@echo ""
+	@echo "$(YELLOW)Step 1: Installing dependencies...$(RESET)"
+	$(MAKE) install
+	@echo ""
+	@echo "$(YELLOW)Step 2: Running tests...$(RESET)"
+	$(MAKE) test
+	@echo ""
+	@echo "$(YELLOW)Step 3: Running downloader...$(RESET)"
+	$(MAKE) run
+	@echo ""
+	@echo "$(GREEN)Quick start completed!$(RESET)"
+	@echo "$(BLUE)Next steps:$(RESET)"
+	@echo "  - Check the 'github_advisories/' directory for output files"
+	@echo "  - Use 'make run-with-token' for higher API rate limits"
+	@echo "  - Read README.md for detailed usage instructions"
+
+# Development workflow
+dev-check: ## Run all development checks
+	@echo "$(BLUE)Running full development check...$(RESET)"
+	$(MAKE) format
+	$(MAKE) lint
+	$(MAKE) security-check
+	$(MAKE) test-coverage
+	@echo "$(GREEN)All development checks passed!$(RESET)"
+
+# Show system info
+info: ## Show system and project information
+	@echo "$(BLUE)System Information:$(RESET)"
+	@echo "  Python version: $$($(PYTHON) --version)"
+	@echo "  Pip version: $$($(PIP) --version)"
+	@echo "  Current directory: $$(pwd)"
+	@echo "  Project: $(PROJECT_NAME)"
+	@echo ""
+	@echo "$(BLUE)Available commands:$(RESET)"
+	@$(MAKE) help
