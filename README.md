@@ -268,7 +268,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 Email: jarlath@gmail.com
 - 🐛 Issues: [GitHub Issues](https://github.com/jblo/Github-Advisory-Downloader/issues)
 - 💬 Discussions: [GitHub Discussions](https://github.com/jblo/Github-Advisory-Downloader/discussions)
 
