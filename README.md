@@ -76,7 +76,7 @@ python github_advisory_downloader.py --token YOUR_GITHUB_TOKEN
 python github_advisory_downloader.py --output-dir custom_directory
 ```
 
-### GitHub Token Setup (Optional)
+### GitHub Token Setup (Optional - but not really, you'll always rate limit out without a token, so do this step.)
 
 For higher rate limits, create a GitHub personal access token:
 
