@@ -56,7 +56,7 @@ graph TB
 
 ```bash
 # Clone or download the package
-git clone <repository-url>
+git clone https://github.com/jblo/Github-Advisory-Downloader
 cd github-advisory-downloader
 
 # Install dependencies
