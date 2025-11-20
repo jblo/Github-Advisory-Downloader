@@ -16,10 +16,19 @@ try:
 except ImportError:
     RICH_AVAILABLE = False
 
-from . import (AdvisoryProcessor, CISAKEVClient, Config, GitHubAdvisoryClient,
-               OutputGenerator)
-from .exceptions import (CISAError, ConfigurationError,
-                         GitHubAdvisoryDownloaderException, GitHubAPIError)
+from . import (
+    AdvisoryProcessor,
+    CISAKEVClient,
+    Config,
+    GitHubAdvisoryClient,
+    OutputGenerator,
+)
+from .exceptions import (
+    CISAError,
+    ConfigurationError,
+    GitHubAdvisoryDownloaderException,
+    GitHubAPIError,
+)
 
 
 def setup_logging(debug: bool = False) -> logging.Logger:
