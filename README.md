@@ -1,12 +1,26 @@
 # GitHub Security Advisory Downloader
 
-**📋 README.md**
+**📋 README.md | Version 2.0.0**
 
 A comprehensive Python tool for downloading, organizing, and analyzing security vulnerabilities from GitHub's Advisory Database with CISA KEV (Known Exploited Vulnerabilities) integration.
+
+> **⚠️ Version 2.0.0 Notice**: This version introduces a modular architecture with breaking changes. See [IMPROVEMENTS.md](IMPROVEMENTS.md) for migration details from v1.0.0.
 
 ## 🎯 Overview
 
 This tool automatically downloads all security advisories from GitHub's Advisory Database, cross-references them with CISA's Known Exploited Vulnerabilities catalog, and organizes the data into multiple formats for analysis and research.
+
+### What's New in v2.0.0
+
+- 🏗️ **Modular Architecture**: Split into 9 focused modules for better maintainability
+- 📦 **Package Installation**: Now installable via pip with console script entry point
+- 🎨 **Multiple Output Formats**: CSV, JSON, JSONL, and summary reports
+- ✅ **Comprehensive Testing**: Full pytest suite with 70+ tests
+- 🔍 **Data Validation**: Input/output validation for data quality
+- 💾 **Smart Caching**: CISA KEV catalog caching with TTL
+- 🎯 **Enhanced CLI**: 12+ command-line options for customization
+- 🔐 **Security Improvements**: Better token handling and input sanitization
+- 🚀 **CI/CD Pipeline**: GitHub Actions with multi-version testing
 
 ## 📊 Architecture Diagram
 
@@ -37,63 +51,134 @@ graph TB
 
 ## ✨ Features
 
+### Core Functionality
 - **Complete Data Collection**: Downloads all GitHub security advisories via GraphQL API
 - **KEV Integration**: Cross-references CVEs with CISA's Known Exploited Vulnerabilities catalog
-- **Multiple Output Formats**: CSV for analysis, JSON archives organized by severity
+- **Multiple Output Formats**: CSV, JSON, JSONL, and summary reports
 - **Comprehensive Metadata**: CVSS scores, affected packages, version ranges, references
-- **Rate Limiting**: Respectful API usage with automatic throttling
-- **Error Handling**: Robust error recovery and progress tracking
-- **Flexible Configuration**: Optional GitHub token support for higher rate limits
+- **Smart Caching**: Local CISA KEV cache with configurable TTL (default: 1 hour)
+
+### Quality & Reliability
+- **Data Validation**: Validates CVE IDs, GHSA IDs, CVSS scores, and timestamps
+- **Type Safety**: Full type hints throughout the codebase
+- **Error Handling**: Custom exceptions with graceful error recovery
+- **Logging System**: Structured logging with configurable levels
+- **Progress Tracking**: Visual progress bars (with optional rich library)
+
+### Configuration & Deployment
+- **Flexible Configuration**: Environment variables via `.env` file support
+- **CLI Options**: 12+ command-line arguments for customization
+- **Installable Package**: Install via pip with `github-advisory-downloader` command
+- **Docker Support**: Included Dockerfile for containerized deployment
+- **CI/CD Ready**: GitHub Actions workflow with comprehensive testing
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.7+
-- `requests` library
+- Python 3.8+ (tested on 3.8, 3.9, 3.10, 3.11, 3.12)
+- pip package manager
 
 ### Installation
 
+#### Option 1: Install from source
 ```bash
-# Clone or download the package
+# Clone the repository
 git clone https://github.com/jblo/Github-Advisory-Downloader
-cd github-advisory-downloader
+cd Github-Advisory-Downloader
+
+# Install the package
+pip install -e .
+```
+
+#### Option 2: Development setup
+```bash
+# Clone and install with dev dependencies
+git clone https://github.com/jblo/Github-Advisory-Downloader
+cd Github-Advisory-Downloader
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Run directly via module
+python -m github_advisory_downloader.cli
 ```
 
 ### Basic Usage
 
+#### Using the installed command (Option 1)
 ```bash
-# Basic usage (no authentication)
-python github_advisory_downloader.py
+# Basic usage (requires GitHub token)
+github-advisory-downloader --token YOUR_GITHUB_TOKEN
 
-# With GitHub token for higher rate limits
-python github_advisory_downloader.py --token YOUR_GITHUB_TOKEN
+# Using environment variable (recommended)
+export GITHUB_TOKEN="your_token_here"
+github-advisory-downloader
 
-# Custom output directory
-python github_advisory_downloader.py --output-dir custom_directory
+# Custom output directory and format
+github-advisory-downloader --output custom_dir --format csv json
+
+# Filter by severity
+github-advisory-downloader --filter CRITICAL HIGH
+
+# Dry run to preview
+github-advisory-downloader --dry-run
 ```
 
-### GitHub Token Setup (Optional - but not really, you'll always rate limit out without a token, so do this step.)
+#### Using Python module (Option 2)
+```bash
+# Basic usage
+python -m github_advisory_downloader.cli --token YOUR_GITHUB_TOKEN
 
-For higher rate limits, create a GitHub personal access token:
+# With environment variable
+export GITHUB_TOKEN="your_token_here"
+python -m github_advisory_downloader.cli
+```
 
-1. Go to GitHub Settings → Developer settings → Personal access tokens
-2. Generate a new token (no special scopes needed for public data)
-3. Use with `--token` parameter
+### GitHub Token Setup (Required)
+
+⚠️ **Important**: A GitHub token is required to avoid rate limiting.
+
+1. Go to GitHub Settings → Developer settings → [Personal access tokens](https://github.com/settings/tokens)
+2. Generate a new token (classic)
+3. **No scopes needed** for public advisory data
+4. Set as environment variable:
+
+```bash
+# Linux/Mac
+export GITHUB_TOKEN="ghp_your_token_here"
+
+# Or use .env file (recommended)
+cp .env.example .env
+# Edit .env and add your token
+```
 
 ## 📁 Output Structure
 
+### Default Output (CSV + Summary)
 ```
 github_advisories/
-├── vulnerabilities.csv      # Complete vulnerability dataset
-├── critical.zip            # Critical severity advisories (JSON)
-├── high.zip               # High severity advisories (JSON)
-├── moderate.zip           # Moderate severity advisories (JSON)
-├── low.zip               # Low severity advisories (JSON)
-└── download_summary.txt   # Statistics and metadata
+├── vulnerabilities_YYYYMMDD_HHMMSS.csv   # Complete vulnerability dataset
+└── download_summary_YYYYMMDD_HHMMSS.txt  # Statistics and metadata
+```
+
+### With JSON Output (`--format json`)
+```
+github_advisories/
+├── vulnerabilities.csv
+├── critical.json         # Critical severity advisories
+├── high.json            # High severity advisories
+├── moderate.json        # Moderate severity advisories
+├── low.json             # Low severity advisories
+└── download_summary.txt
+```
+
+### With JSONL Output (`--format jsonl`)
+```
+github_advisories/
+├── vulnerabilities.csv
+├── advisories.jsonl      # All advisories in JSON Lines format
+└── download_summary.txt
 ```
 
 ## 📊 CSV Data Schema
@@ -156,60 +241,144 @@ critical_kev.to_csv('immediate_action_required.csv', index=False)
 
 ## 🧪 Testing
 
-Run the test suite to ensure everything works correctly:
+The project includes a comprehensive test suite with 70+ tests:
 
 ```bash
 # Run all tests
-python -m pytest tests/ -v
+pytest tests/ -v
 
-# Run specific test categories
-python -m pytest tests/test_api_integration.py -v    # API tests
-python -m pytest tests/test_data_processing.py -v   # Data processing tests
-python -m pytest tests/test_csv_generation.py -v    # CSV generation tests
+# Run with coverage
+pytest tests/ -v --cov=github_advisory_downloader --cov-report=html
+
+# Run specific test modules
+pytest tests/test_validation.py -v         # Validation tests
+pytest tests/test_data_processing.py -v    # Data processing tests
+pytest tests/test_output.py -v             # Output generation tests
 ```
 
 ### Test Coverage
 
 The test suite covers:
-- ✅ GitHub API integration
-- ✅ CISA KEV catalog fetching
-- ✅ Data processing and validation
-- ✅ CSV generation and schema validation
-- ✅ ZIP file creation and organization
-- ✅ Error handling and edge cases
+- ✅ **Data Validation**: CVE IDs, GHSA IDs, CVSS scores, timestamps
+- ✅ **Advisory Processing**: Extraction, KEV matching, normalization
+- ✅ **Output Generation**: CSV, JSON, JSONL formats
+- ✅ **Configuration**: Environment variables, CLI arguments
+- ✅ **Error Handling**: Custom exceptions, edge cases
+- ✅ **Dry Run Mode**: Preview functionality without file writes
+
+### Code Quality Tools
+
+```bash
+# Format code
+black github_advisory_downloader tests
+
+# Sort imports
+isort github_advisory_downloader tests
+
+# Lint code
+flake8 github_advisory_downloader tests --max-line-length=100
+
+# Type check
+mypy github_advisory_downloader
+
+# Security scan
+bandit -r github_advisory_downloader -ll
+
+# Install pre-commit hooks
+pre-commit install
+```
 
 ## 📋 Requirements
 
-`requirements.txt`:
+### Core Dependencies
+```
+requests==2.32.3       # HTTP library for API calls
+python-dotenv==1.0.0   # Environment variable management
+rich==13.7.0           # Progress bars and rich output (optional)
+pandas==2.2.0          # Data analysis (optional)
+```
 
+### Development Dependencies
 ```
-requests>=2.31.0
-pytest>=7.4.0
-pytest-cov>=4.1.0
+pytest==7.4.4          # Testing framework
+pytest-cov==4.1.0      # Coverage reporting
+black==24.1.1          # Code formatting
+isort==5.13.2          # Import sorting
+flake8==7.0.0          # Linting
+mypy==1.8.0            # Type checking
+bandit==1.7.5          # Security scanning
+pre-commit==3.6.0      # Git hooks
 ```
+
+See `requirements.txt` for the complete list with pinned versions.
 
 ## 🔧 Configuration
 
-### Environment Variables
+### Environment Variables (.env file)
+
+Copy `.env.example` to `.env` and configure:
 
 ```bash
-# Optional: Set GitHub token via environment variable
-export GITHUB_TOKEN="your_token_here"
-python github_advisory_downloader.py
+# GitHub API Configuration
+GITHUB_TOKEN=ghp_your_token_here
+
+# Output Configuration
+OUTPUT_DIR=github_advisories
+CISA_CACHE_DIR=.cache
+
+# Behavior
+DEBUG=false
+DRY_RUN=false
+BATCH_SIZE=100
 ```
 
 ### Command Line Options
 
-```
-usage: github_advisory_downloader.py [-h] [--token TOKEN] [--output-dir OUTPUT_DIR]
+```bash
+usage: github-advisory-downloader [-h] [--token TOKEN] [--output OUTPUT]
+                                   [--format {csv,json,jsonl} [{csv,json,jsonl} ...]]
+                                   [--filter {CRITICAL,HIGH,MODERATE,LOW} [...]]
+                                   [--batch-size N] [--cache-dir DIR]
+                                   [--dry-run] [--debug] [--no-summary]
+                                   [--timestamp | --no-timestamp]
 
-Download GitHub Security Advisories organized by severity
+Download and analyze GitHub Security Advisories with CISA KEV integration
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --token TOKEN         GitHub personal access token (optional, for higher rate limits)
-  --output-dir OUTPUT_DIR
-                        Output directory (default: github_advisories)
+  -h, --help            Show this help message and exit
+  --token TOKEN         GitHub personal access token (use env var instead)
+  --output OUTPUT       Output directory (default: github_advisories)
+  --format FORMAT       Output formats: csv, json, jsonl (default: csv)
+  --filter SEVERITY     Filter by severity levels
+  --batch-size N        GraphQL batch size (default: 100)
+  --cache-dir DIR       Cache directory (default: .cache)
+  --dry-run             Preview without writing files
+  --debug               Enable debug logging
+  --no-summary          Skip summary report generation
+  --timestamp           Add timestamp to filenames (default)
+  --no-timestamp        Use fixed filenames without timestamps
+```
+
+### Example Configurations
+
+```bash
+# Production: Filter critical/high, JSON output, no timestamps
+github-advisory-downloader \
+  --filter CRITICAL HIGH \
+  --format csv json \
+  --no-timestamp \
+  --output /data/advisories
+
+# Development: Debug mode with dry run
+github-advisory-downloader \
+  --debug \
+  --dry-run \
+  --batch-size 10
+
+# Analysis: All formats, timestamped files
+github-advisory-downloader \
+  --format csv json jsonl \
+  --timestamp
 ```
 
 ## 🤝 Contributing
