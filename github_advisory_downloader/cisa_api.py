@@ -2,12 +2,12 @@
 CISA KEV Catalog API module with caching support.
 """
 
-import logging
 import json
+import logging
 import time
-from pathlib import Path
-from typing import Set, Optional
 from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Optional, Set
 
 import requests
 
@@ -24,7 +24,7 @@ class CISAKEVClient:
     def __init__(self, config: Config):
         """
         Initialize CISA KEV client.
-        
+
         Args:
             config: Configuration instance
         """
@@ -35,13 +35,13 @@ class CISAKEVClient:
     def get_kev_cves(self, force_refresh: bool = False) -> Set[str]:
         """
         Get set of CVEs from CISA KEV catalog with caching.
-        
+
         Args:
             force_refresh: Force refresh from API even if cached
-            
+
         Returns:
             Set of CVE IDs
-            
+
         Raises:
             CISAError: If fetch fails
         """
@@ -65,10 +65,10 @@ class CISAKEVClient:
     def _fetch_from_api(self) -> Set[str]:
         """
         Fetch CVEs from CISA KEV API.
-        
+
         Returns:
             Set of CVE IDs
-            
+
         Raises:
             CISAError: If fetch fails
         """
@@ -89,9 +89,7 @@ class CISAKEVClient:
 
                 vulnerabilities = kev_data.get("vulnerabilities", [])
                 cve_ids = {
-                    vuln.get("cveID")
-                    for vuln in vulnerabilities
-                    if vuln.get("cveID")
+                    vuln.get("cveID") for vuln in vulnerabilities if vuln.get("cveID")
                 }
 
                 logger.info(f"✅ Loaded {len(cve_ids)} CVEs from CISA KEV catalog")
@@ -106,7 +104,9 @@ class CISAKEVClient:
                     )
                     time.sleep(retry_delay)
                 else:
-                    raise CISAError(f"Failed to fetch CISA KEV catalog after {max_retries} attempts: {e}") from e
+                    raise CISAError(
+                        f"Failed to fetch CISA KEV catalog after {max_retries} attempts: {e}"
+                    ) from e
 
             except Exception as e:
                 raise CISAError(f"Error processing CISA KEV catalog: {e}") from e
@@ -114,7 +114,7 @@ class CISAKEVClient:
     def _get_cache_path(self) -> Path:
         """
         Get cache file path.
-        
+
         Returns:
             Path to cache file
         """
@@ -127,7 +127,7 @@ class CISAKEVClient:
     def _is_cache_valid(self) -> bool:
         """
         Check if cache is still valid based on TTL.
-        
+
         Returns:
             bool: True if cache exists and is fresh
         """
@@ -147,7 +147,7 @@ class CISAKEVClient:
     def _load_cache(self) -> Optional[Set[str]]:
         """
         Load CVEs from cache if valid.
-        
+
         Returns:
             Set of CVE IDs or None if cache invalid/missing
         """
@@ -171,7 +171,7 @@ class CISAKEVClient:
     def _save_cache(self, cve_ids: Set[str]) -> None:
         """
         Save CVEs to cache.
-        
+
         Args:
             cve_ids: Set of CVE IDs to cache
         """
@@ -195,10 +195,10 @@ class CISAKEVClient:
     def is_known_exploited(self, cve_id: str) -> bool:
         """
         Check if CVE is in KEV catalog.
-        
+
         Args:
             cve_id: CVE identifier
-            
+
         Returns:
             bool: True if CVE is known exploited
         """
@@ -207,10 +207,10 @@ class CISAKEVClient:
     def is_any_kev(self, cve_ids: list) -> bool:
         """
         Check if any CVE in list is known exploited.
-        
+
         Args:
             cve_ids: List of CVE identifiers
-            
+
         Returns:
             bool: True if any CVE is known exploited
         """

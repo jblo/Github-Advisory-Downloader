@@ -111,7 +111,7 @@ def temp_output_dir(tmp_path):
 def mock_config(temp_output_dir):
     """Mock configuration for testing."""
     from github_advisory_downloader.config import Config
-    
+
     return Config(
         github_token="test-token",
         output_dir=temp_output_dir,

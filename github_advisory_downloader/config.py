@@ -2,11 +2,12 @@
 Configuration management for GitHub Advisory Downloader.
 """
 
-import os
 import logging
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Set
+
 from dotenv import load_dotenv
 
 from .exceptions import ConfigurationError
@@ -24,7 +25,9 @@ class Config:
     github_timeout: int = 30
 
     # CISA KEV settings
-    cisa_kev_url: str = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+    cisa_kev_url: str = (
+        "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+    )
     cisa_timeout: int = 30
     cisa_cache_ttl: int = 3600  # Cache for 1 hour
     cisa_cache_dir: Optional[Path] = None
@@ -56,13 +59,13 @@ class Config:
     def from_env_and_args(cls, **kwargs) -> "Config":
         """
         Create Config from environment variables and CLI arguments.
-        
+
         Args:
             **kwargs: Override values from environment variables
-            
+
         Returns:
             Config: Configuration instance
-            
+
         Raises:
             ConfigurationError: If configuration is invalid
         """
@@ -73,7 +76,11 @@ class Config:
         config_dict = {
             "github_token": os.getenv("GITHUB_TOKEN"),
             "output_dir": Path(os.getenv("OUTPUT_DIR", "github_advisories_output")),
-            "cisa_cache_dir": Path(os.getenv("CISA_CACHE_DIR", ".cache")) if os.getenv("CISA_CACHE_DIR") else None,
+            "cisa_cache_dir": (
+                Path(os.getenv("CISA_CACHE_DIR", ".cache"))
+                if os.getenv("CISA_CACHE_DIR")
+                else None
+            ),
             "debug": os.getenv("DEBUG", "false").lower() == "true",
             "dry_run": os.getenv("DRY_RUN", "false").lower() == "true",
             "batch_size": int(os.getenv("BATCH_SIZE", "100")),
@@ -92,7 +99,7 @@ class Config:
     def validate(self) -> None:
         """
         Validate configuration.
-        
+
         Raises:
             ConfigurationError: If configuration is invalid
         """
@@ -102,7 +109,9 @@ class Config:
             if not self.dry_run:
                 self.output_dir.mkdir(parents=True, exist_ok=True)
                 if not os.access(self.output_dir, os.W_OK):
-                    raise ConfigurationError(f"Output directory not writable: {self.output_dir}")
+                    raise ConfigurationError(
+                        f"Output directory not writable: {self.output_dir}"
+                    )
         except Exception as e:
             raise ConfigurationError(f"Invalid output directory: {e}") from e
 
@@ -117,7 +126,9 @@ class Config:
 
         # Validate batch size
         if self.batch_size < 1 or self.batch_size > 100:
-            raise ConfigurationError(f"Batch size must be between 1 and 100, got {self.batch_size}")
+            raise ConfigurationError(
+                f"Batch size must be between 1 and 100, got {self.batch_size}"
+            )
 
         # Validate severity filter
         valid_severities = {"CRITICAL", "HIGH", "MODERATE", "LOW"}
@@ -128,9 +139,13 @@ class Config:
 
         # Warn about token in CLI
         if "github_token" in os.environ and os.getenv("DEBUG"):
-            logger.warning("⚠️  GitHub token passed via CLI. Consider using GITHUB_TOKEN environment variable instead.")
+            logger.warning(
+                "⚠️  GitHub token passed via CLI. Consider using GITHUB_TOKEN environment variable instead."
+            )
 
-        logger.debug(f"Configuration validated: output_dir={self.output_dir}, batch_size={self.batch_size}")
+        logger.debug(
+            f"Configuration validated: output_dir={self.output_dir}, batch_size={self.batch_size}"
+        )
 
     def __repr__(self) -> str:
         """Return string representation with masked token."""

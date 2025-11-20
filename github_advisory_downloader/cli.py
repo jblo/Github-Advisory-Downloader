@@ -5,69 +5,61 @@ Command-line interface for GitHub Advisory Downloader.
 import argparse
 import logging
 import sys
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 try:
-    from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
     from rich.console import Console
+    from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
 
-from . import (
-    Config,
-    GitHubAdvisoryClient,
-    CISAKEVClient,
-    AdvisoryProcessor,
-    OutputGenerator,
-)
-from .exceptions import (
-    GitHubAdvisoryDownloaderException,
-    ConfigurationError,
-    GitHubAPIError,
-    CISAError,
-)
+from . import (AdvisoryProcessor, CISAKEVClient, Config, GitHubAdvisoryClient,
+               OutputGenerator)
+from .exceptions import (CISAError, ConfigurationError,
+                         GitHubAdvisoryDownloaderException, GitHubAPIError)
 
 
 def setup_logging(debug: bool = False) -> logging.Logger:
     """
     Setup logging configuration.
-    
+
     Args:
         debug: Enable debug logging
-        
+
     Returns:
         Logger instance
     """
     log_level = logging.DEBUG if debug else logging.INFO
-    
+
     # Create logger
     logger = logging.getLogger("github_advisory_downloader")
     logger.setLevel(log_level)
-    
+
     # Remove existing handlers
     logger.handlers = []
-    
+
     # Console handler
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(log_level)
-    
+
     # Formatter
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     handler.setFormatter(formatter)
-    
+
     logger.addHandler(handler)
-    
+
     return logger
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
     """
     Create and configure argument parser.
-    
+
     Returns:
         Configured ArgumentParser
     """
@@ -92,18 +84,21 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--token", "-t",
+        "--token",
+        "-t",
         help="GitHub personal access token (optional, recommended for higher rate limits)",
     )
 
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default="github_advisories_output",
         help="Output directory (default: github_advisories_output)",
     )
 
     parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         nargs="+",
         default=["csv", "json"],
         choices=["csv", "json", "jsonl"],
@@ -119,7 +114,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--batch-size", "-b",
+        "--batch-size",
+        "-b",
         type=int,
         default=100,
         help="GraphQL batch size (default: 100, max: 100)",
@@ -234,13 +230,20 @@ def main():
 
                         advisory_count += 1
                         if advisory_count % 100 == 0:
-                            progress.update(task, description=f"📥 Fetched {advisory_count} advisories")
+                            progress.update(
+                                task,
+                                description=f"📥 Fetched {advisory_count} advisories",
+                            )
 
-                    progress.update(task, description=f"✅ Fetched {advisory_count} advisories")
+                    progress.update(
+                        task, description=f"✅ Fetched {advisory_count} advisories"
+                    )
             else:
-                for i, advisory in enumerate(github_client.get_advisories(
-                    severity_filter=severity_filter,
-                )):
+                for i, advisory in enumerate(
+                    github_client.get_advisories(
+                        severity_filter=severity_filter,
+                    )
+                ):
                     rows = processor.process_advisory(advisory)
                     processor.add_rows(rows)
 
@@ -269,7 +272,7 @@ def main():
         for row in rows:
             severity = row.get("severity", "LOW")
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
-            
+
             ecosystem = row.get("ecosystem")
             if ecosystem:
                 ecosystem_counts[ecosystem] += 1

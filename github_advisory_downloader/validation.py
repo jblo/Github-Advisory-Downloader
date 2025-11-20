@@ -32,10 +32,10 @@ class DataValidator:
     def validate_cve_id(cve_id: str) -> bool:
         """
         Validate CVE ID format.
-        
+
         Args:
             cve_id: CVE identifier to validate
-            
+
         Returns:
             bool: True if valid CVE format
         """
@@ -47,10 +47,10 @@ class DataValidator:
     def validate_ghsa_id(ghsa_id: str) -> bool:
         """
         Validate GHSA ID format.
-        
+
         Args:
             ghsa_id: GHSA identifier to validate
-            
+
         Returns:
             bool: True if valid GHSA format
         """
@@ -62,10 +62,10 @@ class DataValidator:
     def validate_cvss_score(score: Any) -> bool:
         """
         Validate CVSS score.
-        
+
         Args:
             score: CVSS score to validate
-            
+
         Returns:
             bool: True if valid CVSS score
         """
@@ -79,10 +79,10 @@ class DataValidator:
     def validate_severity(severity: str) -> bool:
         """
         Validate severity level.
-        
+
         Args:
             severity: Severity level to validate
-            
+
         Returns:
             bool: True if valid severity
         """
@@ -92,10 +92,10 @@ class DataValidator:
     def validate_timestamp(timestamp: str) -> bool:
         """
         Validate ISO 8601 timestamp.
-        
+
         Args:
             timestamp: Timestamp string to validate
-            
+
         Returns:
             bool: True if valid timestamp
         """
@@ -109,13 +109,13 @@ class DataValidator:
     def validate_advisory_response(advisory: Dict[str, Any]) -> bool:
         """
         Validate GitHub advisory API response structure.
-        
+
         Args:
             advisory: Advisory data from API
-            
+
         Returns:
             bool: True if valid structure
-            
+
         Raises:
             ValidationError: If critical fields are missing
         """
@@ -146,10 +146,10 @@ class DataValidator:
     def validate_cvss_response(cvss: Optional[Dict[str, Any]]) -> bool:
         """
         Validate CVSS data structure.
-        
+
         Args:
             cvss: CVSS data from API
-            
+
         Returns:
             bool: True if valid or None
         """
@@ -170,15 +170,17 @@ class DataValidator:
     def validate_vulnerability_response(vulnerability: Dict[str, Any]) -> bool:
         """
         Validate vulnerability structure within advisory.
-        
+
         Args:
             vulnerability: Vulnerability data
-            
+
         Returns:
             bool: True if valid structure
         """
         if not isinstance(vulnerability, dict):
-            raise ValidationError(f"Vulnerability must be a dict, got {type(vulnerability)}")
+            raise ValidationError(
+                f"Vulnerability must be a dict, got {type(vulnerability)}"
+            )
 
         # Package info is optional
         package = vulnerability.get("package")
@@ -191,10 +193,10 @@ class DataValidator:
     def validate_cve_list(cve_list: List[str]) -> bool:
         """
         Validate list of CVE IDs.
-        
+
         Args:
             cve_list: List of CVE identifiers
-            
+
         Returns:
             bool: True if all are valid CVE format
         """
@@ -211,13 +213,13 @@ class DataValidator:
     def validate_kev_response(kev_data: Dict[str, Any]) -> bool:
         """
         Validate CISA KEV catalog response structure.
-        
+
         Args:
             kev_data: KEV catalog data
-            
+
         Returns:
             bool: True if valid structure
-            
+
         Raises:
             ValidationError: If structure is invalid
         """
@@ -229,7 +231,9 @@ class DataValidator:
             raise ValidationError("KEV data missing 'vulnerabilities' field")
 
         if not isinstance(vulnerabilities, list):
-            raise ValidationError(f"Vulnerabilities must be a list, got {type(vulnerabilities)}")
+            raise ValidationError(
+                f"Vulnerabilities must be a list, got {type(vulnerabilities)}"
+            )
 
         return True
 
@@ -237,19 +241,17 @@ class DataValidator:
     def validate_csv_row(row: Dict[str, Any]) -> bool:
         """
         Validate CSV row structure.
-        
+
         Args:
             row: CSV row data
-            
+
         Returns:
             bool: True if valid
-            
+
         Raises:
             ValidationError: If validation fails
         """
-        required_fields = {
-            "ghsa_id", "cve_ids", "summary", "severity", "published_at"
-        }
+        required_fields = {"ghsa_id", "cve_ids", "summary", "severity", "published_at"}
         missing = required_fields - set(row.keys())
         if missing:
             raise ValidationError(f"CSV row missing required fields: {missing}")
@@ -273,11 +275,11 @@ class DataValidator:
     def sanitize_string(value: str, max_length: int = 10000) -> str:
         """
         Sanitize string for CSV/JSON output.
-        
+
         Args:
             value: String to sanitize
             max_length: Maximum allowed length
-            
+
         Returns:
             str: Sanitized string
         """

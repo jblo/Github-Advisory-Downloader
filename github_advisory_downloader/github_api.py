@@ -21,7 +21,7 @@ class GitHubAdvisoryClient:
     def __init__(self, config: Config):
         """
         Initialize GitHub API client.
-        
+
         Args:
             config: Configuration instance
         """
@@ -40,14 +40,14 @@ class GitHubAdvisoryClient:
     ) -> Generator[Dict[str, Any], None, None]:
         """
         Fetch security advisories from GitHub with pagination.
-        
+
         Args:
             severity_filter: Optional set of severities to filter (e.g., {"CRITICAL", "HIGH"})
             checkpoint: Cursor to resume from previous download
-            
+
         Yields:
             Advisory dict for each advisory
-            
+
         Raises:
             GitHubAPIError: If API calls fail
         """
@@ -80,7 +80,7 @@ class GitHubAdvisoryClient:
                 for advisory in advisories:
                     try:
                         DataValidator.validate_advisory_response(advisory)
-                        
+
                         severity = advisory.get("severity", "")
                         if severity_filter and severity not in severity_filter:
                             continue
@@ -113,10 +113,10 @@ class GitHubAdvisoryClient:
     def _build_query(self, cursor: Optional[str] = None) -> str:
         """
         Build GraphQL query for fetching advisories.
-        
+
         Args:
             cursor: Pagination cursor
-            
+
         Returns:
             GraphQL query string
         """
@@ -169,14 +169,14 @@ class GitHubAdvisoryClient:
     def _execute_query(self, query: str, max_retries: int = None) -> requests.Response:
         """
         Execute GraphQL query with retry logic.
-        
+
         Args:
             query: GraphQL query string
             max_retries: Maximum retry attempts
-            
+
         Returns:
             Response object
-            
+
         Raises:
             GitHubAPIError: If all retries fail
         """
@@ -196,7 +196,9 @@ class GitHubAdvisoryClient:
 
             except requests.exceptions.RequestException as e:
                 if attempt < max_retries - 1:
-                    wait_time = self.config.retry_delay * (2 ** attempt)  # Exponential backoff
+                    wait_time = self.config.retry_delay * (
+                        2**attempt
+                    )  # Exponential backoff
                     logger.warning(
                         f"⚠️  Attempt {attempt + 1}/{max_retries} failed: {e}. "
                         f"Retrying in {wait_time}s..."
@@ -210,15 +212,15 @@ class GitHubAdvisoryClient:
     def get_rate_limit_info(self) -> Dict[str, Any]:
         """
         Get GitHub API rate limit information.
-        
+
         Returns:
             Dict with rate limit info
-            
+
         Raises:
             GitHubAPIError: If fetch fails
         """
         query = "{ rateLimit { limit remaining resetAt } }"
-        
+
         try:
             response = self._execute_query(query, max_retries=1)
             data = response.json()

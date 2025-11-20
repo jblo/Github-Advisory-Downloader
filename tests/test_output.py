@@ -7,8 +7,9 @@ import json
 from pathlib import Path
 
 import pytest
-from github_advisory_downloader.output import OutputGenerator
+
 from github_advisory_downloader.config import Config
+from github_advisory_downloader.output import OutputGenerator
 
 
 class TestOutputGenerator:
@@ -65,7 +66,9 @@ class TestOutputGenerator:
             data = json.loads(lines[0])
             assert data["ghsa_id"] == "GHSA-xxxx-yyyy-zzzz"
 
-    def test_generate_json_by_severity(self, mock_config, sample_advisory, temp_output_dir):
+    def test_generate_json_by_severity(
+        self, mock_config, sample_advisory, temp_output_dir
+    ):
         """Test JSON file generation by severity."""
         temp_output_dir.mkdir(parents=True, exist_ok=True)
         generator = OutputGenerator(mock_config)
@@ -107,7 +110,9 @@ class TestOutputGenerator:
             "Maven": 30,
         }
 
-        summary_file = generator.generate_summary(stats, severity_counts, ecosystem_counts)
+        summary_file = generator.generate_summary(
+            stats, severity_counts, ecosystem_counts
+        )
 
         assert summary_file is not None
         assert summary_file.exists()

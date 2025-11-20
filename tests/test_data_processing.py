@@ -3,6 +3,7 @@ Unit tests for data processing module.
 """
 
 import pytest
+
 from github_advisory_downloader.data_processing import AdvisoryProcessor
 
 

@@ -3,8 +3,9 @@ Unit tests for validation module.
 """
 
 import pytest
-from github_advisory_downloader.validation import DataValidator
+
 from github_advisory_downloader.exceptions import ValidationError
+from github_advisory_downloader.validation import DataValidator
 
 
 class TestDataValidator:

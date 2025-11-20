@@ -21,7 +21,7 @@ class OutputGenerator:
     def __init__(self, config: Config):
         """
         Initialize output generator.
-        
+
         Args:
             config: Configuration instance
         """
@@ -31,14 +31,14 @@ class OutputGenerator:
     def generate_csv(self, rows: List[Dict[str, Any]], filename: str = None) -> Path:
         """
         Generate CSV file from vulnerability rows.
-        
+
         Args:
             rows: List of vulnerability data dicts
             filename: Optional custom filename
-            
+
         Returns:
             Path to created CSV file
-            
+
         Raises:
             DataProcessingError: If file generation fails
         """
@@ -47,17 +47,37 @@ class OutputGenerator:
             return None
 
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") if self.config.timestamp_outputs else ""
-            filename = f"vulnerabilities_{timestamp}.csv" if timestamp else "vulnerabilities.csv"
+            timestamp = (
+                datetime.now().strftime("%Y%m%d_%H%M%S")
+                if self.config.timestamp_outputs
+                else ""
+            )
+            filename = (
+                f"vulnerabilities_{timestamp}.csv"
+                if timestamp
+                else "vulnerabilities.csv"
+            )
 
         csv_file = self.output_dir / filename
 
         logger.info(f"📊 Creating CSV file with {len(rows)} records...")
 
         fieldnames = [
-            "ghsa_id", "cve_ids", "summary", "severity", "cvss_score", "cvss_vector",
-            "package_name", "ecosystem", "vulnerable_version_range", "first_patched_version",
-            "published_at", "updated_at", "references", "permalink", "KEV"
+            "ghsa_id",
+            "cve_ids",
+            "summary",
+            "severity",
+            "cvss_score",
+            "cvss_vector",
+            "package_name",
+            "ecosystem",
+            "vulnerable_version_range",
+            "first_patched_version",
+            "published_at",
+            "updated_at",
+            "references",
+            "permalink",
+            "KEV",
         ]
 
         try:
@@ -72,19 +92,16 @@ class OutputGenerator:
         except Exception as e:
             raise DataProcessingError(f"Failed to create CSV file: {e}") from e
 
-    def generate_json_by_severity(
-        self,
-        advisories: Dict[str, List[Any]]
-    ) -> List[Path]:
+    def generate_json_by_severity(self, advisories: Dict[str, List[Any]]) -> List[Path]:
         """
         Generate JSON files organized by severity.
-        
+
         Args:
             advisories: Dict mapping severity to list of advisories
-            
+
         Returns:
             List of created file paths
-            
+
         Raises:
             DataProcessingError: If file generation fails
         """
@@ -95,34 +112,48 @@ class OutputGenerator:
             if not advisory_list:
                 continue
 
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") if self.config.timestamp_outputs else ""
-            filename = f"advisories_{severity.lower()}_{timestamp}.json" if timestamp else f"advisories_{severity.lower()}.json"
+            timestamp = (
+                datetime.now().strftime("%Y%m%d_%H%M%S")
+                if self.config.timestamp_outputs
+                else ""
+            )
+            filename = (
+                f"advisories_{severity.lower()}_{timestamp}.json"
+                if timestamp
+                else f"advisories_{severity.lower()}.json"
+            )
             filepath = self.output_dir / filename
 
             try:
                 with open(filepath, "w", encoding="utf-8") as f:
                     json.dump(advisory_list, f, indent=2, default=str)
 
-                logger.info(f"✅ {severity}: {len(advisory_list)} advisories → {filename}")
+                logger.info(
+                    f"✅ {severity}: {len(advisory_list)} advisories → {filename}"
+                )
                 created_files.append(filepath)
 
             except Exception as e:
                 logger.error(f"❌ Failed to save {severity} JSON: {e}")
-                raise DataProcessingError(f"Failed to create {severity} JSON: {e}") from e
+                raise DataProcessingError(
+                    f"Failed to create {severity} JSON: {e}"
+                ) from e
 
         return created_files
 
-    def generate_jsonlines(self, rows: List[Dict[str, Any]], filename: str = None) -> Path:
+    def generate_jsonlines(
+        self, rows: List[Dict[str, Any]], filename: str = None
+    ) -> Path:
         """
         Generate JSONL (JSON Lines) file for streaming analysis.
-        
+
         Args:
             rows: List of vulnerability data dicts
             filename: Optional custom filename
-            
+
         Returns:
             Path to created file
-            
+
         Raises:
             DataProcessingError: If file generation fails
         """
@@ -131,8 +162,16 @@ class OutputGenerator:
             return None
 
         if filename is None:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") if self.config.timestamp_outputs else ""
-            filename = f"vulnerabilities_{timestamp}.jsonl" if timestamp else "vulnerabilities.jsonl"
+            timestamp = (
+                datetime.now().strftime("%Y%m%d_%H%M%S")
+                if self.config.timestamp_outputs
+                else ""
+            )
+            filename = (
+                f"vulnerabilities_{timestamp}.jsonl"
+                if timestamp
+                else "vulnerabilities.jsonl"
+            )
 
         jsonl_file = self.output_dir / filename
 
@@ -153,24 +192,30 @@ class OutputGenerator:
         self,
         stats: Dict[str, Any],
         severity_counts: Dict[str, int] = None,
-        ecosystem_counts: Dict[str, int] = None
+        ecosystem_counts: Dict[str, int] = None,
     ) -> Path:
         """
         Generate summary report.
-        
+
         Args:
             stats: Statistics dict
             severity_counts: Dict with severity level counts
             ecosystem_counts: Dict with ecosystem counts
-            
+
         Returns:
             Path to created summary file
-            
+
         Raises:
             DataProcessingError: If file generation fails
         """
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") if self.config.timestamp_outputs else ""
-        filename = f"download_summary_{timestamp}.txt" if timestamp else "download_summary.txt"
+        timestamp = (
+            datetime.now().strftime("%Y%m%d_%H%M%S")
+            if self.config.timestamp_outputs
+            else ""
+        )
+        filename = (
+            f"download_summary_{timestamp}.txt" if timestamp else "download_summary.txt"
+        )
         summary_file = self.output_dir / filename
 
         logger.info("📋 Creating summary report...")
@@ -186,9 +231,15 @@ class OutputGenerator:
                 # Statistics
                 f.write("STATISTICS\n")
                 f.write("-" * 60 + "\n")
-                f.write(f"Total Advisories Downloaded: {stats.get('total_advisories', 0)}\n")
-                f.write(f"Total Vulnerability Records: {stats.get('total_vulnerabilities', 0)}\n")
-                f.write(f"Known Exploited Vulnerabilities (KEV): {stats.get('kev_matches', 0)}\n")
+                f.write(
+                    f"Total Advisories Downloaded: {stats.get('total_advisories', 0)}\n"
+                )
+                f.write(
+                    f"Total Vulnerability Records: {stats.get('total_vulnerabilities', 0)}\n"
+                )
+                f.write(
+                    f"Known Exploited Vulnerabilities (KEV): {stats.get('kev_matches', 0)}\n"
+                )
                 f.write(f"Validation Errors: {stats.get('validation_errors', 0)}\n\n")
 
                 # Severity breakdown
@@ -205,9 +256,7 @@ class OutputGenerator:
                     f.write("TOP AFFECTED ECOSYSTEMS (Top 10)\n")
                     f.write("-" * 60 + "\n")
                     sorted_ecosystems = sorted(
-                        ecosystem_counts.items(),
-                        key=lambda x: x[1],
-                        reverse=True
+                        ecosystem_counts.items(), key=lambda x: x[1], reverse=True
                     )[:10]
                     for ecosystem, count in sorted_ecosystems:
                         f.write(f"{ecosystem:20}: {count:6} vulnerabilities\n")
@@ -228,18 +277,18 @@ class OutputGenerator:
         advisories_by_severity: Dict[str, List[Any]],
         stats: Dict[str, Any],
         severity_counts: Dict[str, int] = None,
-        ecosystem_counts: Dict[str, int] = None
+        ecosystem_counts: Dict[str, int] = None,
     ) -> Dict[str, Path]:
         """
         Generate all configured output formats.
-        
+
         Args:
             rows: CSV rows
             advisories_by_severity: Advisories grouped by severity
             stats: Statistics
             severity_counts: Severity breakdown
             ecosystem_counts: Ecosystem breakdown
-            
+
         Returns:
             Dict mapping format name to file path
         """
@@ -278,7 +327,9 @@ class OutputGenerator:
         # Summary report
         if self.config.create_summary:
             try:
-                summary_path = self.generate_summary(stats, severity_counts, ecosystem_counts)
+                summary_path = self.generate_summary(
+                    stats, severity_counts, ecosystem_counts
+                )
                 created_files["summary"] = summary_path
             except Exception as e:
                 logger.error(f"Failed to generate summary: {e}")

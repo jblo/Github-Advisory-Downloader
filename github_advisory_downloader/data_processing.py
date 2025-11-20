@@ -17,7 +17,7 @@ class AdvisoryProcessor:
     def __init__(self, kev_cves: Set[str]):
         """
         Initialize advisory processor.
-        
+
         Args:
             kev_cves: Set of CVEs from CISA KEV catalog
         """
@@ -33,13 +33,13 @@ class AdvisoryProcessor:
     def process_advisory(self, advisory: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Process advisory and extract vulnerability rows for CSV.
-        
+
         Args:
             advisory: Advisory data from GitHub API
-            
+
         Returns:
             List of CSV rows for this advisory
-            
+
         Raises:
             DataProcessingError: If processing fails
         """
@@ -70,7 +70,7 @@ class AdvisoryProcessor:
             if advisory.get("cvss"):
                 cvss_score = advisory["cvss"].get("score", "")
                 cvss_vector = advisory["cvss"].get("vectorString", "")
-                
+
                 # Validate CVSS
                 if cvss_score and not DataValidator.validate_cvss_score(cvss_score):
                     logger.warning(f"Invalid CVSS score for {ghsa_id}: {cvss_score}")
@@ -106,15 +106,17 @@ class AdvisoryProcessor:
 
         except Exception as e:
             self.stats["validation_errors"] += 1
-            raise DataProcessingError(f"Failed to process advisory {advisory.get('ghsaId', 'unknown')}: {e}") from e
+            raise DataProcessingError(
+                f"Failed to process advisory {advisory.get('ghsaId', 'unknown')}: {e}"
+            ) from e
 
     def _extract_cve_ids(self, identifiers: List[Dict[str, Any]]) -> List[str]:
         """
         Extract CVE IDs from advisory identifiers.
-        
+
         Args:
             identifiers: List of identifier dicts
-            
+
         Returns:
             List of CVE IDs
         """
@@ -143,7 +145,7 @@ class AdvisoryProcessor:
     ) -> List[Dict[str, Any]]:
         """
         Process vulnerabilities within an advisory.
-        
+
         Args:
             advisory: Full advisory data
             ghsa_id: GHSA ID
@@ -157,7 +159,7 @@ class AdvisoryProcessor:
             references_list: Comma-separated references
             permalink: GitHub advisory URL
             is_kev: Whether advisory is in KEV catalog
-            
+
         Returns:
             List of CSV rows
         """
@@ -181,7 +183,9 @@ class AdvisoryProcessor:
                         vulnerable_range = vuln.get("vulnerableVersionRange", "")
                         patched_version = ""
                         if vuln.get("firstPatchedVersion"):
-                            patched_version = vuln["firstPatchedVersion"].get("identifier", "")
+                            patched_version = vuln["firstPatchedVersion"].get(
+                                "identifier", ""
+                            )
 
                         row = {
                             "ghsa_id": DataValidator.sanitize_string(ghsa_id),
@@ -192,8 +196,12 @@ class AdvisoryProcessor:
                             "cvss_vector": DataValidator.sanitize_string(cvss_vector),
                             "package_name": DataValidator.sanitize_string(package_name),
                             "ecosystem": ecosystem,
-                            "vulnerable_version_range": DataValidator.sanitize_string(vulnerable_range),
-                            "first_patched_version": DataValidator.sanitize_string(patched_version),
+                            "vulnerable_version_range": DataValidator.sanitize_string(
+                                vulnerable_range
+                            ),
+                            "first_patched_version": DataValidator.sanitize_string(
+                                patched_version
+                            ),
                             "published_at": published_at,
                             "updated_at": updated_at,
                             "references": references_list,
@@ -209,22 +217,44 @@ class AdvisoryProcessor:
                             logger.warning(f"Invalid CSV row for {ghsa_id}: {e}")
 
                     except Exception as e:
-                        logger.warning(f"Failed to process vulnerability in {ghsa_id}: {e}")
+                        logger.warning(
+                            f"Failed to process vulnerability in {ghsa_id}: {e}"
+                        )
                         continue
             else:
                 # No vulnerability nodes - create generic row
-                rows.append(self._create_generic_row(
-                    ghsa_id, cve_list, summary, severity, cvss_score,
-                    cvss_vector, published_at, updated_at, references_list,
-                    permalink, is_kev
-                ))
+                rows.append(
+                    self._create_generic_row(
+                        ghsa_id,
+                        cve_list,
+                        summary,
+                        severity,
+                        cvss_score,
+                        cvss_vector,
+                        published_at,
+                        updated_at,
+                        references_list,
+                        permalink,
+                        is_kev,
+                    )
+                )
         else:
             # No vulnerabilities section - create generic row
-            rows.append(self._create_generic_row(
-                ghsa_id, cve_list, summary, severity, cvss_score,
-                cvss_vector, published_at, updated_at, references_list,
-                permalink, is_kev
-            ))
+            rows.append(
+                self._create_generic_row(
+                    ghsa_id,
+                    cve_list,
+                    summary,
+                    severity,
+                    cvss_score,
+                    cvss_vector,
+                    published_at,
+                    updated_at,
+                    references_list,
+                    permalink,
+                    is_kev,
+                )
+            )
             self.stats["total_vulnerabilities"] += 1
 
         return rows
@@ -245,7 +275,7 @@ class AdvisoryProcessor:
     ) -> Dict[str, Any]:
         """
         Create a generic CSV row for advisory without specific vulnerabilities.
-        
+
         Returns:
             CSV row dict
         """
@@ -270,7 +300,7 @@ class AdvisoryProcessor:
     def add_rows(self, rows: List[Dict[str, Any]]) -> None:
         """
         Add rows to internal storage.
-        
+
         Args:
             rows: List of CSV rows
         """
@@ -279,7 +309,7 @@ class AdvisoryProcessor:
     def get_rows(self) -> List[Dict[str, Any]]:
         """
         Get all processed rows.
-        
+
         Returns:
             List of CSV rows
         """
@@ -288,7 +318,7 @@ class AdvisoryProcessor:
     def get_stats(self) -> Dict[str, Any]:
         """
         Get processing statistics.
-        
+
         Returns:
             Dict with statistics
         """
