@@ -17,14 +17,14 @@ with open("requirements.txt", "r") as f:
 
 setup(
     name="github-advisory-downloader",
-    version="1.0.0",
-    author="Security Research Team",
-    author_email="security@example.com",
+    version="2.0.0",
+    author="Jarlath",
+    author_email="jarlath@gmail.com",
     description="Download and analyze GitHub Security Advisories with CISA KEV integration",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/your-org/github-advisory-downloader",
-    py_modules=["github_advisory_downloader"],
+    url="https://github.com/jblo/github-advisory-downloader",
+    packages=find_packages(exclude=["tests", "tests.*"]),
     install_requires=requirements,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -47,7 +47,7 @@ setup(
     python_requires=">=3.7",
     entry_points={
         "console_scripts": [
-            "github-advisory-downloader=github_advisory_downloader:main",
+            "github-advisory-downloader=github_advisory_downloader.cli:main",
         ],
     },
     keywords="security, vulnerabilities, github, cisa, kev, advisories, cve",

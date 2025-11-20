@@ -1,5 +1,22 @@
+# Core dependencies
+requests==2.32.3
+python-dotenv==1.0.0
 
-requests>=2.31.0
-pytest>=7.4.0
-pytest-cov>=4.1.0
-pandas>=2.0.0
+# Optional dependencies for enhanced features
+rich==13.7.0
+pandas==2.2.0
+
+# Testing dependencies
+pytest==7.4.4
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Code quality tools
+black==24.1.1
+flake8==7.0.0
+isort==5.13.2
+mypy==1.8.0
+bandit==1.7.5
+
+# Type stubs
+types-requests==2.31.0.10
